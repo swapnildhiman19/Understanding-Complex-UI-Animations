@@ -21,6 +21,7 @@ final class ActionButtonView: UIView {
         case textMaskDisappear
         case checkmarkMovesUp
         case buttonToBlack
+        case chevronRotation
         case textChevronSpread
     }
     
@@ -209,6 +210,13 @@ final class ActionButtonView: UIView {
             chevronLabel.centerYAnchor.constraint(equalTo: buttonContainer.centerYAnchor),
             chevronLabel.leadingAnchor.constraint(equalTo: continueLabel.trailingAnchor)
         ])
+        
+        // Start below button, will slide up
+        let slideOffset = AnimationConfig.Layout.continueLabelSlideOffset
+        continueLabel.transform = CGAffineTransform(translationX: 0, y: slideOffset)
+        
+        // Chevron starts above and to the left (12 o'clock position for arc animation)
+        chevronLabel.transform = CGAffineTransform(translationX: -20, y: -40)
     }
     
     private func setupGesture() {
@@ -312,7 +320,7 @@ final class ActionButtonView: UIView {
         maskLayer.add(widthAnimation, forKey: "shrinkWidth")
         maskLayer.add(positionAnimation, forKey: "movePosition")
         maskLayer.bounds.size.width = 0
-        maskLayer.position.x = 0
+        maskLayer.position.x = labelFrame.width
         
         CATransaction.commit()
         
@@ -374,22 +382,49 @@ final class ActionButtonView: UIView {
         }
     }
     
-    // Phase 6: button goes black, show "Continue Shopping"
+    // Phase 6: button goes black, "Continue Shopping" slides up (synced with success content)
     func animatePhase6ButtonToBlack() {
         orderPlacedContainer.alpha = 0
+        continueLabel.alpha = 1
         
+        // Use same timing as success content so they finish together
         UIView.animate(
-            withDuration: AnimationConfig.Duration.buttonToBlack,
-            delay: 0,
-            options: [.curveEaseInOut],
+            withDuration: AnimationConfig.Duration.successContentSlideUp,
+            delay: AnimationConfig.Duration.successContentDelay,
+            usingSpringWithDamping: AnimationConfig.Spring.contentSlideDamping,
+            initialSpringVelocity: AnimationConfig.Spring.contentSlideVelocity,
+            options: [],
             animations: {
                 self.buttonContainer.backgroundColor = AnimationConfig.Colors.buttonBlack
                 self.buttonContainer.layer.borderWidth = 0
-                self.continueLabel.alpha = 1
-                self.chevronLabel.alpha = 1
+                self.continueLabel.transform = .identity
             },
             completion: { _ in
                 self.delegate?.actionButtonDidCompletePhase(.buttonToBlack)
+            }
+        )
+    }
+    
+    // Phase 6b: chevron sweeps in a quarter-circle arc (12 o'clock → 3 o'clock)
+    func animateChevronRotation() {
+        chevronLabel.alpha = 1
+        
+        UIView.animateKeyframes(
+            withDuration: AnimationConfig.Duration.chevronRotation,
+            delay: 0,
+            options: [.calculationModeLinear],
+            animations: {
+                // First half: move right and start coming down
+                UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.5) {
+                    self.chevronLabel.transform = CGAffineTransform(translationX: 0, y: -20)
+                }
+                // Second half: land with small gap from text
+                UIView.addKeyframe(withRelativeStartTime: 0.5, relativeDuration: 0.5) {
+                    self.chevronLabel.transform = CGAffineTransform(translationX: 4, y: 0)
+                }
+            },
+            completion: { _ in
+                self.delegate?.actionButtonDidCompletePhase(.chevronRotation)
             }
         )
     }
@@ -450,9 +485,11 @@ final class ActionButtonView: UIView {
         floatingCheckmark.transform = .identity
         floatingCheckmark.alpha = 0
         
-        continueLabel.transform = .identity
+        // Reset to initial transforms
+        let slideOffset = AnimationConfig.Layout.continueLabelSlideOffset
+        continueLabel.transform = CGAffineTransform(translationX: 0, y: slideOffset)
         continueLabel.alpha = 0
-        chevronLabel.transform = .identity
+        chevronLabel.transform = CGAffineTransform(translationX: -20, y: -40)
         chevronLabel.alpha = 0
     }
 }

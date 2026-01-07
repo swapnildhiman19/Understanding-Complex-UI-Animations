@@ -147,6 +147,8 @@ extension ViewController: ActionButtonViewDelegate {
         case .checkmarkMovesUp:
             animatePhase5()
         case .buttonToBlack:
+            actionButton.animateChevronRotation()
+        case .chevronRotation:
             actionButton.animatePhase7TextChevronSpread()
         case .textChevronSpread:
             break // done!
@@ -174,8 +176,8 @@ private extension ViewController {
         
         actionButton.fadeOutFloatingCheckmark()
         
-        successContent.animateIn { [weak self] in
-            self?.actionButton.animatePhase6ButtonToBlack()
-        }
+        // Success content and "Continue Shopping" slide up together
+        successContent.animateIn()
+        actionButton.animatePhase6ButtonToBlack()
     }
 }

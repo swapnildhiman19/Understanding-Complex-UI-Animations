@@ -22,9 +22,9 @@ enum AnimationConfig {
         static let labelsFadeOut: TimeInterval = 0.2
         static let successContentSlideUp: TimeInterval = 0.6
         static let successContentDelay: TimeInterval = 0.1
-        static let buttonToBlack: TimeInterval = 0.3
         static let textChevronSpread: TimeInterval = 0.4
         static let textChevronSpreadDelay: TimeInterval = 0.1
+        static let chevronRotation: TimeInterval = 0.3
     }
     
     enum Spring {
@@ -63,6 +63,7 @@ enum AnimationConfig {
         static let placeOrderExitDistance: CGFloat = 150
         static let orderPlacedEntryOffset: CGFloat = -200
         static let successContentStartOffset: CGFloat = 300
+        static let continueLabelSlideOffset: CGFloat = 40
     }
     
     // MARK: - Typography

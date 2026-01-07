@@ -1,55 +1,55 @@
 # Editorialist iOS Animation Assignment
 
-A UIKit implementation of the "Place Order" animation flow from the provided Figma design.
+A UIKit implementation of the "Place Order" animation from the Figma design.
 
 ## Quick Start
 
-1. Open `EditorialistIosUIAnimationAssignment.xcodeproj` in Xcode 15+
+1. Open the `.xcodeproj` in Xcode 15+
 2. Run on iOS 16+ simulator
 3. Tap "Place Order" to see the animation
-4. Tap again after completion to reset and replay
+4. Tap again to reset and replay
 
 ---
 
-## What I Built
+## The Animation
 
-The animation has 7 phases that chain together:
+8 phases that chain together:
 
-1. **Text Swap** : "Place Order" exits right while "Order placed ✓" slides in from left
-2. **Button turns white** : with a subtle border
-3. **Text disappears** : masked from left to right, checkmark follows along
-4. **Checkmark moves up** : floats upward inside the button
-5. **Success content appears** : slides up from behind the footer
-6. **Button turns black** : "Continue Shopping ›" fades in
-7. **Text spreads apart** : label goes left, chevron goes right
+1. **Text swap** - "Place Order" slides out right, "Order placed ✓" slides in from left
+2. **Button turns white** - subtle border appears
+3. **Text disappears** - masked left-to-right, checkmark follows along
+4. **Checkmark floats up** - moves upward inside the button
+5. **Success content slides up** - emerges from behind the footer
+6. **Button turns black** - "Continue Shopping" slides up (synced with step 5)
+7. **Chevron sweeps in** - quarter-circle arc animation from top to right
+8. **Text spreads apart** - label goes left, chevron goes right
 
 ## Why UIKit?
 
-I went with UIKit instead of SwiftUI because:
+Went with UIKit over SwiftUI for a few reasons:
 
-- The mask animation in Phase 3 needs `CALayer` manipulation
-- Chaining animations with completion handlers is more predictable
-- Easier to match exact Figma timing with imperative code
+- Phase 3 needs direct `CALayer` mask manipulation
+- Completion handler chaining is more predictable for sequencing
+- Easier to match the Figma timing with imperative animation calls
 
 ## Project Structure
 
 ```
 ├── Models/
-│   └── AnimationConfiguration.swift   : All the timing/color/layout constants
+│   └── AnimationConfiguration.swift   - timing, colors, layout constants
 ├── Views/
-│   ├── ActionButtonView.swift         : The button and its animations
-│   └── SuccessContentView.swift       : Success message UI
-└── ViewController.swift               : Coordinates everything
+│   ├── ActionButtonView.swift         - button + all its animations
+│   └── SuccessContentView.swift       - success message view
+└── ViewController.swift               - coordinates everything
 ```
 
-I pulled all the magic numbers into `AnimationConfiguration.swift` so timing tweaks are easy to make without digging through animation code.
+All the magic numbers live in `AnimationConfiguration.swift` so tweaking timing or colors doesn't require digging through animation code.
 
-## How the Animation Works
+## Interesting Bits
 
-### The Tricky Parts
+**Phase 3 - the text mask:**
 
-**Phase 3 (text disappearing):**
-The text doesn't just fade — it gets clipped from left to right using a `CALayer` mask. At the same time, the whole container shifts left so the checkmark appears to follow the disappearing text edge.
+The text doesn't just fade. It gets clipped from left to right using a `CALayer` mask while the container shifts left so the checkmark follows the disappearing edge.
 
 ```swift
 // Mask shrinks while container translates
@@ -62,30 +62,43 @@ UIView.animate(withDuration: duration) {
 }
 ```
 
-**Phase 5 (content slides up from behind):**
-The success content is placed *behind* the footer in the view hierarchy, so it appears to emerge from underneath:
+**Phase 5 - sliding up from behind:**
+
+The success content is inserted *below* the footer in the view hierarchy, so it appears to emerge from underneath:
 
 ```swift
 view.addSubview(footerContainer)
 view.insertSubview(successContent, belowSubview: footerContainer)
 ```
 
-### Timing
-These are approximations based on watching the Figma prototype 
+**Phase 7 - chevron arc:**
+
+The chevron sweeps in along a quarter-circle path using keyframe animation:
+
+```swift
+UIView.animateKeyframes(withDuration: 0.3, delay: 0, options: [.calculationModeLinear]) {
+    UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.5) {
+        self.chevronLabel.transform = CGAffineTransform(translationX: 0, y: -20)
+    }
+    UIView.addKeyframe(withRelativeStartTime: 0.5, relativeDuration: 0.5) {
+        self.chevronLabel.transform = .identity
+    }
+}
+```
 
 ## Architecture
 
-Followed MVC to keep things organized:
+Simple MVC:
 
-- **ActionButtonView** handles all button related animations and notifies the controller via delegate when each phase completes
-- **SuccessContentView** just knows how to animate itself in/out
-- **ViewController** chains the phases together and coordinates between views
+- **ActionButtonView** - owns all button animations, notifies controller when each phase completes
+- **SuccessContentView** - knows how to slide itself in/out
+- **ViewController** - chains phases together, handles reset
 
-This makes it easy to see the animation flow in one place (the switch statement in `actionButtonDidCompletePhase`).
+The animation flow is easy to follow in `actionButtonDidCompletePhase` - just a switch statement that triggers the next phase.
 
-## Reset Feature
+## Reset
 
-After the animation completes, tapping the button again resets everything to the initial state. This makes it easy to demo the animation multiple times without restarting the app.
+Tapping the button after the animation completes resets everything to initial state. No need to restart the app to see it again.
 
 ---
 
