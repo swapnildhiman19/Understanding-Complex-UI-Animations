@@ -305,7 +305,7 @@ final class ActionButtonView: UIView {
         
         let positionAnimation = CABasicAnimation(keyPath: "position.x")
         positionAnimation.fromValue = labelFrame.width / 2
-        positionAnimation.toValue = 0
+        positionAnimation.toValue = labelFrame.width
         positionAnimation.fillMode = .forwards
         positionAnimation.isRemovedOnCompletion = false
         
