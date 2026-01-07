@@ -4,45 +4,36 @@
 //
 //  Created by Swapnil Dhiman on 07/01/26.
 //
-//  A custom button view that handles the multi-phase "Place Order" animation.
-//  Encapsulates all button-related UI elements and their animations.
-//
 
 import UIKit
 
-// MARK: - Delegate Protocol
-
-/// Delegate to notify the controller when animation phases complete or reset is requested.
 protocol ActionButtonViewDelegate: AnyObject {
     func actionButtonDidTap(_ buttonView: ActionButtonView)
     func actionButtonDidCompletePhase(_ phase: ActionButtonView.AnimationPhase)
     func actionButtonDidRequestReset(_ buttonView: ActionButtonView)
 }
 
-// MARK: - ActionButtonView
-
-/// A sophisticated animated button that transitions through multiple states:
-/// "Place Order" → "Order placed ✓" → Checkmark only → "Continue Shopping"
 final class ActionButtonView: UIView {
     
-    // MARK: - Animation Phases
-    
     enum AnimationPhase {
-        case textSwap           // Phase 1: Place Order → Order placed
-        case buttonToWhite      // Phase 2: Button becomes white
-        case textMaskDisappear  // Phase 3: Text disappears, checkmark shifts left
-        case checkmarkMovesUp   // Phase 4: Checkmark moves upward
-        case buttonToBlack      // Phase 6: Button returns to black
-        case textChevronSpread  // Phase 7: Text and chevron spread apart
+        case textSwap
+        case buttonToWhite
+        case textMaskDisappear
+        case checkmarkMovesUp
+        case buttonToBlack
+        case textChevronSpread
     }
     
-    // MARK: - Delegate
+    enum ButtonState {
+        case initial
+        case animating
+        case completed
+    }
     
     weak var delegate: ActionButtonViewDelegate?
     
-    // MARK: - UI Components
+    // MARK: - UI
     
-    /// The button background container
     private let buttonContainer: UIView = {
         let view = UIView()
         view.backgroundColor = AnimationConfig.Colors.buttonBlack
@@ -52,7 +43,6 @@ final class ActionButtonView: UIView {
         return view
     }()
     
-    /// "Place Order" label - initial state
     private let placeOrderLabel: UILabel = {
         let label = UILabel()
         label.text = AnimationConfig.Text.placeOrder
@@ -63,7 +53,6 @@ final class ActionButtonView: UIView {
         return label
     }()
     
-    /// Container for "Order placed" text and checkmark
     private let orderPlacedContainer: UIView = {
         let view = UIView()
         view.clipsToBounds = true
@@ -72,7 +61,6 @@ final class ActionButtonView: UIView {
         return view
     }()
     
-    /// "Order placed" text label
     private let orderPlacedLabel: UILabel = {
         let label = UILabel()
         label.text = AnimationConfig.Text.orderPlaced
@@ -82,7 +70,6 @@ final class ActionButtonView: UIView {
         return label
     }()
     
-    /// Small checkmark next to "Order placed"
     private let buttonCheckmark: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(
@@ -95,7 +82,6 @@ final class ActionButtonView: UIView {
         return imageView
     }()
     
-    /// Floating checkmark that moves up after text disappears
     private let floatingCheckmark: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(
@@ -109,7 +95,6 @@ final class ActionButtonView: UIView {
         return imageView
     }()
     
-    /// "Continue Shopping" label - final state
     private let continueLabel: UILabel = {
         let label = UILabel()
         label.text = AnimationConfig.Text.continueShopping
@@ -120,7 +105,6 @@ final class ActionButtonView: UIView {
         return label
     }()
     
-    /// Chevron ">" on the right side
     private let chevronLabel: UILabel = {
         let label = UILabel()
         label.text = AnimationConfig.Text.chevron
@@ -131,21 +115,10 @@ final class ActionButtonView: UIView {
         return label
     }()
     
-    // MARK: - Button State
-    
-    /// Tracks the current state of the button for handling taps appropriately.
-    enum ButtonState {
-        case initial        // Ready to start animation
-        case animating      // Animation in progress
-        case completed      // Animation finished, ready to reset
-    }
-    
-    // MARK: - Animation State
-    
     private var textMaskLayer: CALayer?
     private var currentState: ButtonState = .initial
     
-    // MARK: - Initialization
+    // MARK: - Init
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -180,7 +153,6 @@ final class ActionButtonView: UIView {
     
     private func setupPlaceOrderLabel() {
         buttonContainer.addSubview(placeOrderLabel)
-        
         NSLayoutConstraint.activate([
             placeOrderLabel.centerXAnchor.constraint(equalTo: buttonContainer.centerXAnchor),
             placeOrderLabel.centerYAnchor.constraint(equalTo: buttonContainer.centerYAnchor)
@@ -196,7 +168,6 @@ final class ActionButtonView: UIView {
             orderPlacedContainer.heightAnchor.constraint(equalToConstant: 24)
         ])
         
-        // Add label and checkmark to container
         orderPlacedContainer.addSubview(orderPlacedLabel)
         orderPlacedContainer.addSubview(buttonCheckmark)
         
@@ -211,7 +182,7 @@ final class ActionButtonView: UIView {
             buttonCheckmark.trailingAnchor.constraint(equalTo: orderPlacedContainer.trailingAnchor)
         ])
         
-        // Position off-screen to the left initially
+        // Start off-screen to the left
         orderPlacedContainer.transform = CGAffineTransform(
             translationX: AnimationConfig.Layout.orderPlacedEntryOffset,
             y: 0
@@ -220,7 +191,6 @@ final class ActionButtonView: UIView {
     
     private func setupFloatingCheckmark() {
         buttonContainer.addSubview(floatingCheckmark)
-        
         NSLayoutConstraint.activate([
             floatingCheckmark.centerXAnchor.constraint(equalTo: buttonContainer.centerXAnchor),
             floatingCheckmark.centerYAnchor.constraint(equalTo: buttonContainer.centerYAnchor),
@@ -236,11 +206,8 @@ final class ActionButtonView: UIView {
         NSLayoutConstraint.activate([
             continueLabel.centerXAnchor.constraint(equalTo: buttonContainer.centerXAnchor),
             continueLabel.centerYAnchor.constraint(equalTo: buttonContainer.centerYAnchor),
-
-
             chevronLabel.centerYAnchor.constraint(equalTo: buttonContainer.centerYAnchor),
-            chevronLabel.leadingAnchor
-                .constraint(equalTo: continueLabel.trailingAnchor)
+            chevronLabel.leadingAnchor.constraint(equalTo: continueLabel.trailingAnchor)
         ])
     }
     
@@ -250,30 +217,24 @@ final class ActionButtonView: UIView {
         buttonContainer.isUserInteractionEnabled = true
     }
     
-    // MARK: - Gesture Handling
+    // MARK: - Tap Handling
     
     @objc private func handleTap() {
         switch currentState {
         case .initial:
-            // Start the animation sequence
             currentState = .animating
             delegate?.actionButtonDidTap(self)
-            
         case .animating:
-            // Animation in progress, ignore taps
-            break
-            
+            break // ignore taps while animating
         case .completed:
-            // Request reset to initial state
             delegate?.actionButtonDidRequestReset(self)
         }
     }
     
-    // MARK: - Animation Methods
+    // MARK: - Animations
     
-    /// Phase 1: "Place Order" exits right, "Order placed ✓" enters from left.
-    /// Button background transitions from black to gray.
-    func animatePhase1_TextSwap() {
+    // Phase 1: swap "Place Order" with "Order placed ✓"
+    func animatePhase1TextSwap() {
         orderPlacedContainer.alpha = 1
         
         UIView.animate(
@@ -281,17 +242,12 @@ final class ActionButtonView: UIView {
             delay: 0,
             options: [.curveEaseInOut],
             animations: {
-                // "Place Order" slides right and fades
                 self.placeOrderLabel.transform = CGAffineTransform(
                     translationX: AnimationConfig.Layout.placeOrderExitDistance,
                     y: 0
                 )
                 self.placeOrderLabel.alpha = 0
-                
-                // "Order placed" slides in from left
                 self.orderPlacedContainer.transform = .identity
-                
-                // Button transitions to gray
                 self.buttonContainer.backgroundColor = AnimationConfig.Colors.buttonGray
             },
             completion: { _ in
@@ -300,8 +256,8 @@ final class ActionButtonView: UIView {
         )
     }
     
-    /// Phase 2: Button background fades from gray to white with a subtle border.
-    func animatePhase2_ButtonToWhite() {
+    // Phase 2: button goes white
+    func animatePhase2ButtonToWhite() {
         UIView.animate(
             withDuration: AnimationConfig.Duration.buttonToWhite,
             delay: AnimationConfig.Duration.buttonToWhiteDelay,
@@ -317,15 +273,14 @@ final class ActionButtonView: UIView {
         )
     }
     
-    /// Phase 3: "Order placed" text disappears via mask animation while container shifts left.
-    /// The checkmark follows the disappearing text edge.
-    func animatePhase3_TextMaskDisappear() {
+    // Phase 3: text disappears with mask, checkmark follows
+    func animatePhase3TextMaskDisappear() {
         layoutIfNeeded()
         
         let textWidth = orderPlacedLabel.bounds.width
         let labelFrame = orderPlacedLabel.bounds
         
-        // Create mask layer
+        // Create mask that we'll shrink to hide the text
         let maskLayer = CALayer()
         maskLayer.backgroundColor = UIColor.black.cgColor
         maskLayer.frame = labelFrame
@@ -334,7 +289,6 @@ final class ActionButtonView: UIView {
         
         let duration = AnimationConfig.Duration.textMaskDisappear
         
-        // Mask animation using Core Animation
         CATransaction.begin()
         CATransaction.setAnimationDuration(duration)
         CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeOut))
@@ -342,7 +296,7 @@ final class ActionButtonView: UIView {
             self?.delegate?.actionButtonDidCompletePhase(.textMaskDisappear)
         }
         
-        // Shrink mask width from left
+        // Shrink mask from left
         let widthAnimation = CABasicAnimation(keyPath: "bounds.size.width")
         widthAnimation.fromValue = labelFrame.width
         widthAnimation.toValue = 0
@@ -357,13 +311,12 @@ final class ActionButtonView: UIView {
         
         maskLayer.add(widthAnimation, forKey: "shrinkWidth")
         maskLayer.add(positionAnimation, forKey: "movePosition")
-        
         maskLayer.bounds.size.width = 0
         maskLayer.position.x = 0
         
         CATransaction.commit()
         
-        // Simultaneously shift the container left so checkmark follows
+        // Shift container left so checkmark follows the disappearing text
         UIView.animate(
             withDuration: duration,
             delay: 0,
@@ -378,9 +331,9 @@ final class ActionButtonView: UIView {
         )
     }
     
-    /// Phase 4: Checkmark moves upward inside the button.
-    func animatePhase4_CheckmarkMovesUp() {
-        // Get current checkmark position after Phase 3 shift
+    // Phase 4: checkmark floats up
+    func animatePhase4CheckmarkMovesUp() {
+        // Figure out where the checkmark ended up after phase 3
         let checkmarkCenter = buttonCheckmark.superview?.convert(
             buttonCheckmark.center,
             to: buttonContainer
@@ -390,10 +343,9 @@ final class ActionButtonView: UIView {
             x: buttonContainer.bounds.width / 2,
             y: buttonContainer.bounds.height / 2
         )
-        
         let offsetX = checkmarkCenter.x - buttonCenter.x
         
-        // Hide text, show floating checkmark at current position
+        // Hide the original, show floating one at same spot
         orderPlacedLabel.alpha = 0
         buttonCheckmark.alpha = 0
         floatingCheckmark.alpha = 1
@@ -416,15 +368,14 @@ final class ActionButtonView: UIView {
         )
     }
     
-    /// Fade out the floating checkmark (called during Phase 5).
     func fadeOutFloatingCheckmark() {
         UIView.animate(withDuration: AnimationConfig.Duration.labelsFadeOut) {
             self.floatingCheckmark.alpha = 0
         }
     }
     
-    /// Phase 6: Button returns to black with "Continue Shopping" text appearing.
-    func animatePhase6_ButtonToBlack() {
+    // Phase 6: button goes black, show "Continue Shopping"
+    func animatePhase6ButtonToBlack() {
         orderPlacedContainer.alpha = 0
         
         UIView.animate(
@@ -443,20 +394,17 @@ final class ActionButtonView: UIView {
         )
     }
     
-    /// Phase 7: "Continue Shopping" moves left, chevron moves right.
-    func animatePhase7_TextChevronSpread() {
+    // Phase 7: spread text and chevron apart
+    func animatePhase7TextChevronSpread() {
         let buttonWidth = buttonContainer.bounds.width
         let textWidth = continueLabel.intrinsicContentSize.width
         let chevronWidth = chevronLabel.intrinsicContentSize.width
         let padding = AnimationConfig.Layout.horizontalPadding
         
-        // Text moves from center to left edge (with padding)
+        // Text goes to left edge
         let textTargetX = -(buttonWidth / 2) + padding + (textWidth / 2)
         
-        // Chevron starts at continueLabel.trailing (not at center)
-        // Its current center X = buttonWidth/2 + textWidth/2 + chevronWidth/2
-        // Its target center X = buttonWidth - padding - chevronWidth/2
-        // Transform = target - current
+        // Chevron goes to right edge (accounting for its starting position next to text)
         let chevronTargetX = (buttonWidth / 2) - padding - textWidth / 2 - chevronWidth
         
         UIView.animate(
@@ -468,7 +416,6 @@ final class ActionButtonView: UIView {
                 self.chevronLabel.transform = CGAffineTransform(translationX: chevronTargetX, y: 0)
             },
             completion: { _ in
-                // Animation sequence complete - button is now tappable for reset
                 self.currentState = .completed
                 self.delegate?.actionButtonDidCompletePhase(.textChevronSpread)
             }
@@ -477,25 +424,21 @@ final class ActionButtonView: UIView {
     
     // MARK: - Reset
     
-    /// Resets the button to its initial "Place Order" state.
-    /// Call this to allow the animation to be triggered again.
     func resetToInitialState() {
-        // Reset state
         currentState = .initial
         
-        // Remove any mask layer from previous animation
+        // Clear the mask from phase 3
         orderPlacedLabel.layer.mask = nil
         textMaskLayer = nil
         
-        // Reset button container appearance
+        // Reset button appearance
         buttonContainer.backgroundColor = AnimationConfig.Colors.buttonBlack
         buttonContainer.layer.borderWidth = 0
         
-        // Reset "Place Order" label
+        // Reset all the labels and transforms
         placeOrderLabel.transform = .identity
         placeOrderLabel.alpha = 1
         
-        // Reset "Order placed" container
         orderPlacedContainer.transform = CGAffineTransform(
             translationX: AnimationConfig.Layout.orderPlacedEntryOffset,
             y: 0
@@ -504,15 +447,12 @@ final class ActionButtonView: UIView {
         orderPlacedLabel.alpha = 1
         buttonCheckmark.alpha = 1
         
-        // Reset floating checkmark
         floatingCheckmark.transform = .identity
         floatingCheckmark.alpha = 0
         
-        // Reset "Continue Shopping" labels
         continueLabel.transform = .identity
         continueLabel.alpha = 0
         chevronLabel.transform = .identity
         chevronLabel.alpha = 0
     }
 }
-

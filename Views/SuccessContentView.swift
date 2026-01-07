@@ -4,18 +4,13 @@
 //
 //  Created by Swapnil Dhiman on 07/01/26.
 //
-//  Displays the success message after an order is placed.
-//
 
 import UIKit
 
-// MARK: - SuccessContentView
-
 final class SuccessContentView: UIView {
     
-    // MARK: - UI Components
+    // MARK: - UI
     
-    /// Large circular background for the checkmark
     private let checkmarkCircle: UIView = {
         let view = UIView()
         view.backgroundColor = AnimationConfig.Colors.successCircleBackground
@@ -25,7 +20,6 @@ final class SuccessContentView: UIView {
         return view
     }()
     
-    /// Checkmark icon inside the circle
     private let checkmarkIcon: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(
@@ -38,7 +32,6 @@ final class SuccessContentView: UIView {
         return imageView
     }()
     
-    /// Main title: "Thank you, your order has been submitted"
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = AnimationConfig.Text.thankYouTitle
@@ -50,7 +43,6 @@ final class SuccessContentView: UIView {
         return label
     }()
     
-    /// Subtitle with additional information
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = AnimationConfig.Text.thankYouSubtitle
@@ -62,7 +54,7 @@ final class SuccessContentView: UIView {
         return label
     }()
     
-    // MARK: - Initialization
+    // MARK: - Init
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -79,14 +71,10 @@ final class SuccessContentView: UIView {
     // MARK: - Setup
     
     private func setupView() {
-        setupCheckmarkCircle()
-        setupTitleLabel()
-        setupSubtitleLabel()
-    }
-    
-    private func setupCheckmarkCircle() {
         addSubview(checkmarkCircle)
         checkmarkCircle.addSubview(checkmarkIcon)
+        addSubview(titleLabel)
+        addSubview(subtitleLabel)
         
         let size = AnimationConfig.Layout.successCircleSize
         
@@ -97,27 +85,15 @@ final class SuccessContentView: UIView {
             checkmarkCircle.heightAnchor.constraint(equalToConstant: size),
             
             checkmarkIcon.centerXAnchor.constraint(equalTo: checkmarkCircle.centerXAnchor),
-            checkmarkIcon.centerYAnchor.constraint(equalTo: checkmarkCircle.centerYAnchor)
-        ])
-    }
-    
-    private func setupTitleLabel() {
-        addSubview(titleLabel)
-        
-        NSLayoutConstraint.activate([
+            checkmarkIcon.centerYAnchor.constraint(equalTo: checkmarkCircle.centerYAnchor),
+            
             titleLabel.topAnchor.constraint(
                 equalTo: checkmarkCircle.bottomAnchor,
                 constant: AnimationConfig.Layout.successCircleToTitleSpacing
             ),
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
-            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
-        ])
-    }
-    
-    private func setupSubtitleLabel() {
-        addSubview(subtitleLabel)
-        
-        NSLayoutConstraint.activate([
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
+            
             subtitleLabel.topAnchor.constraint(
                 equalTo: titleLabel.bottomAnchor,
                 constant: AnimationConfig.Layout.titleToSubtitleSpacing
@@ -130,7 +106,6 @@ final class SuccessContentView: UIView {
     
     // MARK: - Animation
     
-    /// Positions the view below the screen, ready to slide up.
     func prepareForAnimation() {
         transform = CGAffineTransform(
             translationX: 0,
@@ -138,7 +113,6 @@ final class SuccessContentView: UIView {
         )
     }
     
-    /// Animates the view sliding up into its final position.
     func animateIn(completion: (() -> Void)? = nil) {
         UIView.animate(
             withDuration: AnimationConfig.Duration.successContentSlideUp,
@@ -155,11 +129,7 @@ final class SuccessContentView: UIView {
         )
     }
     
-    // MARK: - Reset
-    
-    /// Resets the view to its initial state (off-screen, ready to animate in again).
     func resetToInitialState() {
         prepareForAnimation()
     }
 }
-
